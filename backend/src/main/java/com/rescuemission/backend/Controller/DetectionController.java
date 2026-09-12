@@ -2,43 +2,56 @@ package com.rescuemission.backend.Controller;
 
 import com.rescuemission.backend.Service.DetectionService;
 import com.rescuemission.backend.entity.Detection;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/s")
+@RequestMapping("/api/detections")
+@RequiredArgsConstructor
 public class DetectionController {
 
     private final DetectionService service;
 
-    public DetectionController(DetectionService service) {
-        this.service = service;
-    }
-
     @GetMapping
-    public List<Detection> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<Detection>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Detection> getById(@PathVariable Long id) {
-        return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
-    public Detection create(@RequestBody Detection entity) {
-        return service.create(entity);
+    public ResponseEntity<Detection> create(@RequestBody Detection detection) {
+        return ResponseEntity.ok(service.save(detection));
     }
 
     @PutMapping("/{id}")
-    public Detection update(
+    public ResponseEntity<Detection> update(
             @PathVariable Long id,
-            @RequestBody Detection entity) {
-        return service.update(id, entity);
+            @RequestBody Detection detection) {
+
+        Detection existing = service.getById(id);
+
+        existing.setDetectionType(detection.getDetectionType());
+        existing.setConfidence(detection.getConfidence());
+        existing.setSeverity(detection.getSeverity());
+        existing.setLatitude(detection.getLatitude());
+        existing.setLongitude(detection.getLongitude());
+        existing.setBodyTemperature(detection.getBodyTemperature());
+        existing.setEnvironmentTemperature(detection.getEnvironmentTemperature());
+        existing.setDistance(detection.getDistance());
+        existing.setConfirmationStatus(detection.getConfirmationStatus());
+        existing.setSensorCount(detection.getSensorCount());
+        existing.setDescription(detection.getDescription());
+        existing.setRobot(detection.getRobot());
+        existing.setMission(detection.getMission());
+
+        return ResponseEntity.ok(service.save(existing));
     }
 
     @DeleteMapping("/{id}")

@@ -2,43 +2,51 @@ package com.rescuemission.backend.Controller;
 
 import com.rescuemission.backend.Service.RobotCommandService;
 import com.rescuemission.backend.entity.RobotCommand;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/s")
+@RequestMapping("/api/robot-commands")
+@RequiredArgsConstructor
 public class RobotCommandController {
 
     private final RobotCommandService service;
 
-    public RobotCommandController(RobotCommandService service) {
-        this.service = service;
-    }
-
     @GetMapping
-    public List<RobotCommand> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<RobotCommand>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RobotCommand> getById(@PathVariable Long id) {
-        return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
-    public RobotCommand create(@RequestBody RobotCommand entity) {
-        return service.create(entity);
+    public ResponseEntity<RobotCommand> create(@RequestBody RobotCommand command) {
+        return ResponseEntity.ok(service.save(command));
     }
 
     @PutMapping("/{id}")
-    public RobotCommand update(
+    public ResponseEntity<RobotCommand> update(
             @PathVariable Long id,
-            @RequestBody RobotCommand entity) {
-        return service.update(id, entity);
+            @RequestBody RobotCommand command) {
+
+        RobotCommand existing = service.getById(id);
+
+        existing.setCommandType(command.getCommandType());
+        existing.setCommandValue(command.getCommandValue());
+        existing.setSource(command.getSource());
+        existing.setApprovalStatus(command.getApprovalStatus());
+        existing.setStatus(command.getStatus());
+        existing.setExecutedAt(command.getExecutedAt());
+        existing.setRobot(command.getRobot());
+        existing.setMission(command.getMission());
+
+        return ResponseEntity.ok(service.save(existing));
     }
 
     @DeleteMapping("/{id}")

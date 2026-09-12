@@ -1,33 +1,38 @@
 package com.rescuemission.backend.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(name = "alerts")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Alert {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "alert_type", nullable = false)
+    @Column(name = "alert_type")
     private String alertType;
 
-    @Column(nullable = false)
     private String severity;
 
-    @Column(nullable = false, length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String message;
 
-    @Column(nullable = false)
+    private String source;
+
+    @Column(name = "recommended_action", columnDefinition = "TEXT")
+    private String recommendedAction;
+
     private String status;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "resolved_at")

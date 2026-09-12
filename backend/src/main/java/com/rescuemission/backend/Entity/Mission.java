@@ -1,27 +1,27 @@
 package com.rescuemission.backend.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(name = "missions")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Mission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String name;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
     private String status;
 
     @Column(name = "start_time")
@@ -34,20 +34,9 @@ public class Mission {
     @JoinColumn(name = "robot_id")
     private Robot robot;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

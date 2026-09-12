@@ -2,43 +2,52 @@ package com.rescuemission.backend.Controller;
 
 import com.rescuemission.backend.Service.AlertService;
 import com.rescuemission.backend.entity.Alert;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/s")
+@RequestMapping("/api/alerts")
+@RequiredArgsConstructor
 public class AlertController {
 
     private final AlertService service;
 
-    public AlertController(AlertService service) {
-        this.service = service;
-    }
-
     @GetMapping
-    public List<Alert> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<Alert>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Alert> getById(@PathVariable Long id) {
-        return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
-    public Alert create(@RequestBody Alert entity) {
-        return service.create(entity);
+    public ResponseEntity<Alert> create(@RequestBody Alert alert) {
+        return ResponseEntity.ok(service.save(alert));
     }
 
     @PutMapping("/{id}")
-    public Alert update(
+    public ResponseEntity<Alert> update(
             @PathVariable Long id,
-            @RequestBody Alert entity) {
-        return service.update(id, entity);
+            @RequestBody Alert alert) {
+
+        Alert existing = service.getById(id);
+
+        existing.setAlertType(alert.getAlertType());
+        existing.setSeverity(alert.getSeverity());
+        existing.setMessage(alert.getMessage());
+        existing.setSource(alert.getSource());
+        existing.setRecommendedAction(alert.getRecommendedAction());
+        existing.setStatus(alert.getStatus());
+        existing.setResolvedAt(alert.getResolvedAt());
+        existing.setRobot(alert.getRobot());
+        existing.setMission(alert.getMission());
+
+        return ResponseEntity.ok(service.save(existing));
     }
 
     @DeleteMapping("/{id}")

@@ -2,43 +2,50 @@ package com.rescuemission.backend.Controller;
 
 import com.rescuemission.backend.Service.RobotLocationService;
 import com.rescuemission.backend.entity.RobotLocation;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/s")
+@RequestMapping("/api/robot-locations")
+@RequiredArgsConstructor
 public class RobotLocationController {
 
     private final RobotLocationService service;
 
-    public RobotLocationController(RobotLocationService service) {
-        this.service = service;
-    }
-
     @GetMapping
-    public List<RobotLocation> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<RobotLocation>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RobotLocation> getById(@PathVariable Long id) {
-        return service.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
-    public RobotLocation create(@RequestBody RobotLocation entity) {
-        return service.create(entity);
+    public ResponseEntity<RobotLocation> create(
+            @RequestBody RobotLocation location) {
+        return ResponseEntity.ok(service.save(location));
     }
 
     @PutMapping("/{id}")
-    public RobotLocation update(
+    public ResponseEntity<RobotLocation> update(
             @PathVariable Long id,
-            @RequestBody RobotLocation entity) {
-        return service.update(id, entity);
+            @RequestBody RobotLocation location) {
+
+        RobotLocation existing = service.getById(id);
+
+        existing.setLatitude(location.getLatitude());
+        existing.setLongitude(location.getLongitude());
+        existing.setDepth(location.getDepth());
+        existing.setDirection(location.getDirection());
+        existing.setRobot(location.getRobot());
+        existing.setMission(location.getMission());
+
+        return ResponseEntity.ok(service.save(existing));
     }
 
     @DeleteMapping("/{id}")

@@ -1,21 +1,23 @@
 package com.rescuemission.backend.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(name = "mission_reports")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class MissionReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 5000)
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     @Column(name = "total_distance")
@@ -27,10 +29,22 @@ public class MissionReport {
     @Column(name = "total_alerts")
     private Integer totalAlerts;
 
-    @Column(name = "final_status", nullable = false)
+    @Column(name = "coverage_percentage")
+    private Double coveragePercentage;
+
+    @Column(name = "survivors_detected")
+    private Integer survivorsDetected;
+
+    @Column(name = "highest_risk_score")
+    private Double highestRiskScore;
+
+    @Column(name = "mission_efficiency")
+    private Double missionEfficiency;
+
+    @Column(name = "final_status")
     private String finalStatus;
 
-    @Column(name = "generated_at", nullable = false)
+    @Column(name = "generated_at")
     private LocalDateTime generatedAt;
 
     @ManyToOne
