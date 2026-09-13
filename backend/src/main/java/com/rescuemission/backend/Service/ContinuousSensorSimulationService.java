@@ -13,6 +13,7 @@ public class ContinuousSensorSimulationService {
 
     private final SensorSimulationService sensorSimulationService;
     private final SafetyEngineService safetyEngineService;
+    private final AlertHistoryService alertHistoryService;
 
     private Map<String, Object> latestReading =
             new LinkedHashMap<>();
@@ -21,10 +22,12 @@ public class ContinuousSensorSimulationService {
 
     public ContinuousSensorSimulationService(
             SensorSimulationService sensorSimulationService,
-            SafetyEngineService safetyEngineService) {
+            SafetyEngineService safetyEngineService,
+            AlertHistoryService alertHistoryService) {
 
         this.sensorSimulationService = sensorSimulationService;
         this.safetyEngineService = safetyEngineService;
+        this.alertHistoryService = alertHistoryService;
 
         generateReading();
     }
@@ -55,6 +58,10 @@ public class ContinuousSensorSimulationService {
                         && !currentAlertSignature.equals(
                                 previousAlertSignature
                         );
+
+        if (alertTriggered) {
+            alertHistoryService.saveAlerts(alerts, 1L);
+        }
 
         boolean criticalAlert =
                 hasCriticalAlert(alerts);
