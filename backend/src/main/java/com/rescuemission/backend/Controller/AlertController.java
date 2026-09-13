@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -28,6 +29,17 @@ public class AlertController {
     @PostMapping
     public ResponseEntity<Alert> create(@RequestBody Alert alert) {
         return ResponseEntity.ok(service.save(alert));
+    }
+
+    @PostMapping("/{id}/resolve")
+    public ResponseEntity<Alert> resolve(@PathVariable Long id) {
+
+        Alert existing = service.getById(id);
+
+        existing.setStatus("RESOLVED");
+        existing.setResolvedAt(LocalDateTime.now());
+
+        return ResponseEntity.ok(service.save(existing));
     }
 
     @PutMapping("/{id}")
