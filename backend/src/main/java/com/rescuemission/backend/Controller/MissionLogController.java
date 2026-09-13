@@ -19,6 +19,11 @@ public class MissionLogController {
     public ResponseEntity<List<MissionLog>> getAll() {
         return ResponseEntity.ok(service.getAll());
     }
+    @GetMapping("/mission/{missionId}")
+public ResponseEntity<List<MissionLog>> getByMissionId(
+        @PathVariable Long missionId) {
+    return ResponseEntity.ok(service.getByMissionId(missionId));
+}
 
     @GetMapping("/{id}")
     public ResponseEntity<MissionLog> getById(@PathVariable Long id) {

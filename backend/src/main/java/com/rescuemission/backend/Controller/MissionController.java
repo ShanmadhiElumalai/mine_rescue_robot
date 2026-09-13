@@ -52,4 +52,34 @@ public class MissionController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/start")
+    public ResponseEntity<Mission> startMission(@PathVariable Long id) {
+        return ResponseEntity.ok(service.startMission(id));
+    }
+
+    @PostMapping("/{id}/pause")
+    public ResponseEntity<Mission> pauseMission(@PathVariable Long id) {
+        return ResponseEntity.ok(service.pauseMission(id));
+    }
+
+    @PostMapping("/{id}/resume")
+    public ResponseEntity<Mission> resumeMission(@PathVariable Long id) {
+        return ResponseEntity.ok(service.resumeMission(id));
+    }
+
+    @PostMapping("/{id}/return-home")
+    public ResponseEntity<Mission> returnHome(@PathVariable Long id) {
+        return ResponseEntity.ok(service.returnHome(id));
+    }
+
+    @PostMapping("/{id}/emergency-stop")
+    public ResponseEntity<Mission> emergencyStop(@PathVariable Long id) {
+        return ResponseEntity.ok(service.emergencyStop(id));
+    }
+
+    @GetMapping("/{id}/status")
+    public ResponseEntity<String> getMissionStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getMissionStatus(id));
+    }
 }
