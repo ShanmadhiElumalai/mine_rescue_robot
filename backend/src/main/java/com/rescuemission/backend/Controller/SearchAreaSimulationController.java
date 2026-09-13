@@ -22,6 +22,7 @@ public class SearchAreaSimulationController {
     @PostMapping("/zone")
     public ResponseEntity<SearchZone> createZone(
             @RequestParam Long robotId,
+            @RequestParam Long missionId,
             @RequestParam String zoneName,
             @RequestParam String description,
             @RequestParam Integer priority,
@@ -30,6 +31,7 @@ public class SearchAreaSimulationController {
         return ResponseEntity.ok(
                 service.createZone(
                         robotId,
+                        missionId,
                         zoneName,
                         description,
                         priority,

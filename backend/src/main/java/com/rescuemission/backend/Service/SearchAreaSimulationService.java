@@ -3,9 +3,11 @@ package com.rescuemission.backend.Service;
 import com.rescuemission.backend.Repository.SearchCoverageRepository;
 import com.rescuemission.backend.Repository.SearchZoneRepository;
 import com.rescuemission.backend.Repository.RobotRepository;
+import com.rescuemission.backend.Repository.MissionRepository;
 import com.rescuemission.backend.entity.SearchCoverage;
 import com.rescuemission.backend.entity.SearchZone;
 import com.rescuemission.backend.entity.Robot;
+import com.rescuemission.backend.entity.Mission;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,19 +19,23 @@ public class SearchAreaSimulationService {
     private final SearchZoneRepository searchZoneRepository;
     private final SearchCoverageRepository searchCoverageRepository;
     private final RobotRepository robotRepository;
+    private final MissionRepository missionRepository;
 
     public SearchAreaSimulationService(
             SearchZoneRepository searchZoneRepository,
             SearchCoverageRepository searchCoverageRepository,
-            RobotRepository robotRepository) {
+            RobotRepository robotRepository,
+            MissionRepository missionRepository) {
 
         this.searchZoneRepository = searchZoneRepository;
         this.searchCoverageRepository = searchCoverageRepository;
         this.robotRepository = robotRepository;
+        this.missionRepository = missionRepository;
     }
 
     public SearchZone createZone(
             Long robotId,
+            Long missionId,
             String zoneName,
             String description,
             Integer priority,
@@ -39,6 +45,10 @@ public class SearchAreaSimulationService {
                 .orElseThrow(() ->
                         new RuntimeException("Robot not found with id: " + robotId));
 
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() ->
+                        new RuntimeException("Mission not found with id: " + missionId));
+
         SearchZone zone = new SearchZone();
 
         zone.setZoneName(zoneName);
@@ -46,13 +56,12 @@ public class SearchAreaSimulationService {
         zone.setPriority(priority);
         zone.setStatus("ACTIVE");
         zone.setTargetCoveragePercentage(targetCoveragePercentage);
-        zone.setBoundaryCoordinates(
-                "SIMULATED_BOUNDARY"
-        );
+        zone.setBoundaryCoordinates("SIMULATED_BOUNDARY");
         zone.setCreatedAt(LocalDateTime.now());
         zone.setStartedAt(LocalDateTime.now());
         zone.setCompletedAt(null);
-        zone.setMission(null);
+
+        zone.setMission(mission);
 
         return searchZoneRepository.save(zone);
     }
