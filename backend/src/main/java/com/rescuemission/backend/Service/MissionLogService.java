@@ -16,7 +16,9 @@ public class MissionLogService {
     public List<MissionLog> getAll() {
         return repository.findAll();
     }
-
+    public List<MissionLog> getByMissionId(Long missionId) {
+    return repository.findByMissionIdOrderByLogTimeAsc(missionId);
+}
     public MissionLog getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mission log not found"));
