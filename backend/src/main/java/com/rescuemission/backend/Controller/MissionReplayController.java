@@ -2,6 +2,7 @@ package com.rescuemission.backend.Controller;
 
 import com.rescuemission.backend.Service.MissionReplayService;
 import com.rescuemission.backend.entity.MissionLog;
+import com.rescuemission.backend.entity.RobotLocation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,12 @@ public class MissionReplayController {
     public ResponseEntity<List<MissionLog>> getReplayData(
             @PathVariable Long missionId) {
         return ResponseEntity.ok(service.getReplayData(missionId));
+    }
+
+    @GetMapping("/{missionId}/path")
+    public ResponseEntity<List<RobotLocation>> getRobotPath(
+            @PathVariable Long missionId) {
+        return ResponseEntity.ok(service.getRobotPath(missionId));
     }
 
     @PostMapping("/{missionId}/play")
@@ -56,4 +63,14 @@ public class MissionReplayController {
                 "replaySpeed", speed
         ));
     }
+    @GetMapping("/{missionId}/timeline")
+public ResponseEntity<Map<String, Object>> getReplayTimeline(
+        @PathVariable Long missionId) {
+
+    return ResponseEntity.ok(Map.of(
+            "missionId", missionId,
+            "logs", service.getReplayData(missionId),
+            "robotPath", service.getRobotPath(missionId)
+    ));
+}
 }
