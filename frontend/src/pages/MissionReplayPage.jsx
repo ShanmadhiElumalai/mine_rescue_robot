@@ -1,138 +1,328 @@
-import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw } from 'lucide-react';
-import { getMissionReplayData, playReplay, pauseReplay, setReplaySpeed } from '../services/api';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  ChevronLeft, 
+  ChevronDown, 
+  VideoOff, 
+  Play, 
+  Pause, 
+  Volume2, 
+  VolumeX, 
+  Maximize2, 
+  Minimize2, 
+  MoreVertical, 
+  Check 
+} from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 export default function MissionReplayPage() {
+  const { setActiveNav } = useApp();
+
+  // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [progress, setProgress] = useState(35);
-  const [replayData, setReplayData] = useState({
-    logs: [
-      { time: "00:00:00", event: "Mission Started" },
-      { time: "00:06:12", event: "Gas Warning" },
-      { time: "00:09:26", event: "Human Detected" },
-      { time: "00:12:34", event: "Comm. Degrading" },
-      { time: "00:16:48", event: "Robot Moved" },
-      { time: "00:19:42", event: "Mission End" }
-    ]
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0); // 00:00 default
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [status, setStatus] = useState('Online');
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+
+  const cardRef = useRef(null);
+
+  // Overlay Checkboxes matching the mockup default state:
+  // Paths (checked), All Sensors (checked), Human Detections (unchecked), Animal Detections (unchecked), Device Actions (unchecked)
+  const [overlays, setOverlays] = useState({
+    paths: true,
+    allSensors: true,
+    humanDetections: false,
+    animalDetections: false,
+    deviceActions: false,
   });
 
-  const [layers, setLayers] = useState({
-    robotPath: true,
-    gasChanges: true,
-    humanDetections: true,
-    hazards: true,
-    communication: true,
-    robotHealth: true,
-  });
+  const toggleOverlay = (key) => {
+    setOverlays(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
-  useEffect(() => {
-    getMissionReplayData(1).then(res => {
-      if (res && res.logs) setReplayData(res);
-    });
-  }, []);
+  const togglePlay = () => {
+    setIsPlaying(prev => !prev);
+  };
 
-  const togglePlay = async () => {
-    if (isPlaying) {
-      await pauseReplay(1);
-      setIsPlaying(false);
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (cardRef.current?.requestFullscreen) {
+        cardRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      }
     } else {
-      await playReplay(1);
-      setIsPlaying(true);
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
     }
   };
 
-  const changeSpeed = async (sp) => {
-    setSpeed(sp);
-    await setReplaySpeed(1, sp);
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Format seconds to mm:ss
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Close popup menus on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.replay-status-dropdown-wrap')) {
+        setShowStatusMenu(false);
+      }
+      if (!e.target.closest('.replay-more-dropdown-wrap')) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div>
-          <h2 className="page-title">Mission Historical Telemetry Replay</h2>
-          <p className="page-subtitle">Replay mission events, telemetry timeline, path history, and hazard evolution</p>
+    <div className="replay-page-wrapper">
+      {/* 1. Main Mission Replay Video Card */}
+      <div className="replay-main-card" ref={cardRef}>
+        {/* Header Section */}
+        <div className="replay-card-header">
+          <div className="replay-header-left">
+            <button 
+              className="replay-back-btn" 
+              onClick={() => setActiveNav && setActiveNav('home')}
+              title="Go back"
+              aria-label="Back"
+            >
+              <ChevronLeft size={22} strokeWidth={2.2} />
+            </button>
+            <div className="replay-title-group">
+              <h2 className="replay-main-title">9. Mission Replay</h2>
+              <p className="replay-sub-title">Review and analyze the recorded mission footage.</p>
+            </div>
+          </div>
+
+          {/* Online Status Dropdown */}
+          <div className="replay-status-dropdown-wrap">
+            <button 
+              className="replay-status-badge"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowStatusMenu(prev => !prev);
+              }}
+              title="Mission connection status"
+            >
+              <span className="status-dot-green"></span>
+              <span className="status-text">{status}</span>
+              <ChevronDown size={14} className="status-chevron" />
+            </button>
+
+            {showStatusMenu && (
+              <div className="replay-dropdown-menu">
+                <div 
+                  className={`replay-dropdown-item ${status === 'Online' ? 'active' : ''}`}
+                  onClick={() => { setStatus('Online'); setShowStatusMenu(false); }}
+                >
+                  <span className="status-dot-green mini"></span>
+                  Online (Telemetry Active)
+                </div>
+                <div 
+                  className={`replay-dropdown-item ${status === 'Replay Mode' ? 'active' : ''}`}
+                  onClick={() => { setStatus('Replay Mode'); setShowStatusMenu(false); }}
+                >
+                  <span className="status-dot-blue mini"></span>
+                  Replay Mode (Archived)
+                </div>
+                <div 
+                  className={`replay-dropdown-item ${status === 'Offline Sync' ? 'active' : ''}`}
+                  onClick={() => { setStatus('Offline Sync'); setShowStatusMenu(false); }}
+                >
+                  <span className="status-dot-gray mini"></span>
+                  Offline Sync
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Video Viewport Area (Empty State) */}
+        <div className="replay-video-viewport">
+          <div className="replay-empty-state">
+            <div className="replay-empty-icon-wrap">
+              <VideoOff size={48} strokeWidth={1.4} className="replay-video-off-icon" />
+            </div>
+            <h3 className="replay-empty-title">No video available for this mission.</h3>
+            <p className="replay-empty-desc">
+              Video footage will be available once a mission is completed<br />and recordings are uploaded.
+            </p>
+          </div>
+        </div>
+
+        {/* Video Controls Bar */}
+        <div className="replay-controls-bar">
+          <div className="replay-controls-left">
+            <button 
+              className="replay-play-btn" 
+              onClick={togglePlay}
+              title={isPlaying ? 'Pause' : 'Play'}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? (
+                <Pause size={15} fill="currentColor" />
+              ) : (
+                <Play size={15} fill="currentColor" style={{ marginLeft: '1px' }} />
+              )}
+            </button>
+            <span className="replay-time-display">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          </div>
+
+          {/* Scrubber timeline */}
+          <div className="replay-scrubber-track">
+            <input 
+              type="range"
+              min="0"
+              max={duration || 100}
+              value={currentTime}
+              onChange={(e) => setCurrentTime(Number(e.target.value))}
+              className="replay-scrubber-input"
+              aria-label="Video timeline scrubber"
+            />
+          </div>
+
+          {/* Right controls */}
+          <div className="replay-controls-right">
+            <button 
+              className="replay-icon-btn" 
+              onClick={toggleMute}
+              title={isMuted ? 'Unmute' : 'Mute'}
+              aria-label={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            </button>
+
+            <button 
+              className="replay-icon-btn" 
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+            </button>
+
+            <div className="replay-more-dropdown-wrap">
+              <button 
+                className="replay-icon-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMoreMenu(prev => !prev);
+                }}
+                title="More options"
+                aria-label="More options"
+              >
+                <MoreVertical size={18} />
+              </button>
+
+              {showMoreMenu && (
+                <div className="replay-dropdown-menu replay-more-menu">
+                  <div className="menu-group-label">Playback Speed</div>
+                  {[0.5, 1, 1.5, 2].map((spd) => (
+                    <div 
+                      key={spd}
+                      className={`replay-dropdown-item ${playbackSpeed === spd ? 'active' : ''}`}
+                      onClick={() => { setPlaybackSpeed(spd); setShowMoreMenu(false); }}
+                    >
+                      {spd}x {spd === 1 && '(Normal)'}
+                    </div>
+                  ))}
+                  <div className="menu-divider"></div>
+                  <div className="replay-dropdown-item" onClick={() => setShowMoreMenu(false)}>
+                    Quality: 1080p HD
+                  </div>
+                  <div className="replay-dropdown-item" onClick={() => setShowMoreMenu(false)}>
+                    Download Telemetry Log
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="dash-card">
-        <div className="card-header">
-          <div className="card-title-group">
-            <RotateCcw size={16} color="#2563eb" />
-            <span className="card-title">Mission Replay Control Center — MISSION-001</span>
-          </div>
-        </div>
-        <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Layer Toggles Row */}
-          <div style={{ display: 'flex', gap: '14px', background: '#f8fafc', padding: '10px 14px', borderRadius: '6px', fontSize: '12px' }}>
-            <span style={{ fontWeight: 700, color: '#64748b' }}>Replay Layers:</span>
-            {Object.keys(layers).map(key => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={layers[key]} 
-                  onChange={() => setLayers(prev => ({ ...prev, [key]: !prev[key] }))} 
-                />
-                <span>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</span>
-              </label>
-            ))}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '16px' }}>
-            {/* Historical Map Viewport */}
-            <div style={{ height: '340px', background: '#0f172a', borderRadius: '8px', position: 'relative', overflow: 'hidden' }}>
-              <svg width="100%" height="100%" viewBox="0 0 100 100">
-                <rect width="100" height="100" fill="#0f172a" />
-                <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,0.1)" />
-                <polyline points="20,20 40,35 60,45 75,70" fill="none" stroke="#f59e0b" strokeWidth="1.5" />
-                <circle cx="60" cy="45" r="4" fill="#2563eb" stroke="#ffffff" strokeWidth="1" />
-              </svg>
-              <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '12px', padding: '4px 10px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                REPLAY TIME: 00:12:34 / 00:19:42
-              </div>
+      {/* 2. Bottom Show Overlays Card */}
+      <div className="replay-overlays-card">
+        <h4 className="replay-overlays-title">Show Overlays</h4>
+        
+        <div className="replay-overlays-list">
+          {/* 1. Paths */}
+          <label 
+            className="replay-checkbox-row" 
+            onClick={() => toggleOverlay('paths')}
+          >
+            <div className={`replay-checkbox-box ${overlays.paths ? 'checked' : ''}`}>
+              {overlays.paths && <Check size={13} strokeWidth={3} color="#ffffff" />}
             </div>
+            <span className="replay-checkbox-label">Paths</span>
+          </label>
 
-            {/* Event Timeline Sidebar */}
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>Event Timeline Log</h4>
-              {replayData.logs.map((log, idx) => (
-                <div key={idx} style={{ padding: '8px 10px', background: '#ffffff', borderRadius: '6px', borderLeft: '3px solid #2563eb', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontWeight: 700, fontSize: '12.5px', color: '#0f172a' }}>{log.event}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'monospace', marginTop: '2px' }}>{log.time}</div>
-                </div>
-              ))}
+          {/* 2. All Sensors */}
+          <label 
+            className="replay-checkbox-row" 
+            onClick={() => toggleOverlay('allSensors')}
+          >
+            <div className={`replay-checkbox-box ${overlays.allSensors ? 'checked' : ''}`}>
+              {overlays.allSensors && <Check size={13} strokeWidth={3} color="#ffffff" />}
             </div>
-          </div>
+            <span className="replay-checkbox-label">All Sensors</span>
+          </label>
 
-          {/* Timeline Player Scrubber Bar */}
-          <div className="replay-controls-bar" style={{ padding: '12px 18px' }}>
-            <button className="replay-play-btn" onClick={togglePlay} style={{ width: '40px', height: '40px' }}>
-              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-            </button>
-            
-            <input 
-              type="range" 
-              className="replay-scrubber" 
-              min="0" 
-              max="100" 
-              value={progress} 
-              onChange={e => setProgress(e.target.value)} 
-            />
-
-            <div className="replay-speed-btns">
-              {[0.5, 1, 2, 4].map(sp => (
-                <button 
-                  key={sp} 
-                  className={`speed-btn ${speed === sp ? 'active' : ''}`}
-                  onClick={() => changeSpeed(sp)}
-                  style={{ padding: '4px 10px', fontSize: '12px' }}
-                >
-                  {sp}x
-                </button>
-              ))}
+          {/* 3. Human Detections */}
+          <label 
+            className="replay-checkbox-row" 
+            onClick={() => toggleOverlay('humanDetections')}
+          >
+            <div className={`replay-checkbox-box ${overlays.humanDetections ? 'checked' : ''}`}>
+              {overlays.humanDetections && <Check size={13} strokeWidth={3} color="#ffffff" />}
             </div>
-          </div>
+            <span className="replay-checkbox-label">Human Detections</span>
+          </label>
+
+          {/* 4. Animal Detections */}
+          <label 
+            className="replay-checkbox-row" 
+            onClick={() => toggleOverlay('animalDetections')}
+          >
+            <div className={`replay-checkbox-box ${overlays.animalDetections ? 'checked' : ''}`}>
+              {overlays.animalDetections && <Check size={13} strokeWidth={3} color="#ffffff" />}
+            </div>
+            <span className="replay-checkbox-label">Animal Detections</span>
+          </label>
+
+          {/* 5. Device Actions */}
+          <label 
+            className="replay-checkbox-row" 
+            onClick={() => toggleOverlay('deviceActions')}
+          >
+            <div className={`replay-checkbox-box ${overlays.deviceActions ? 'checked' : ''}`}>
+              {overlays.deviceActions && <Check size={13} strokeWidth={3} color="#ffffff" />}
+            </div>
+            <span className="replay-checkbox-label">Device Actions</span>
+          </label>
         </div>
       </div>
     </div>

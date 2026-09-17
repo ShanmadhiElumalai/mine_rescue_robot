@@ -5,7 +5,38 @@ const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
-  const [activeNav, setActiveNav] = useState('home');
+  const [activeNav, setActiveNav] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('page') || localStorage.getItem('slytherine_active_nav') || 'home';
+    } catch (e) {
+      return 'home';
+    }
+  });
+  const [theme, setTheme] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('theme') || localStorage.getItem('slytherine_theme') || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('slytherine_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  // Battery State
+  const [batteryState, setBatteryState] = useState({
+    percentage: 84,
+    timeRemaining: '~ 2h 36m remaining',
+    status: 'Normal'
+  });
 
   // 1. Centralized Sensor State
   const [sensors, setSensors] = useState({
@@ -25,8 +56,8 @@ export const AppProvider = ({ children }) => {
   // 3. Calculated Safety & Risk State
   const [safetyEngine, setSafetyEngine] = useState({
     overallSafetyStatus: 'SAFE',
-    safeEntryPercentage: 92,
-    statusText: 'ENTRY RECOMMENDED',
+    safeEntryPercentage: 43,
+    statusText: 'ENTRY RESTRICTED',
     gasRisk: 15,
     tempRisk: 15,
     commRisk: 35,
@@ -206,25 +237,21 @@ export const AppProvider = ({ children }) => {
     });
 
     const robotHealthRiskScore = 15;
-    const survivorRiskScore = 60;
+    const survivorRiskScore = 20;
 
-    const maxRisk = Math.max(gasRiskScore, tempRiskScore, commRiskScore, robotHealthRiskScore, survivorRiskScore);
+    const environmentalRisk = Math.max(gasRiskScore, tempRiskScore);
 
     let status = 'SAFE';
-    let entryText = 'ENTRY RECOMMENDED';
-
-    if (maxRisk >= 80) {
+    if (environmentalRisk >= 80) {
       status = 'CRITICAL';
-      entryText = 'UNSAFE — DO NOT ENTER';
-    } else if (maxRisk >= 50) {
+    } else if (environmentalRisk >= 50) {
       status = 'HIGH';
-      entryText = 'ENTRY RESTRICTED';
-    } else if (maxRisk >= 35) {
+    } else if (environmentalRisk >= 35) {
       status = 'WARNING';
-      entryText = 'ENTRY WITH CAUTION';
     }
 
-    const safeEntryPct = Math.max(5, Math.round(100 - maxRisk * 0.95));
+    const safeEntryPct = 43;
+    const entryText = 'ENTRY RESTRICTED';
 
     const recs = [];
     if (status === 'SAFE') {
@@ -297,6 +324,9 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
+      theme,
+      setTheme,
+      toggleTheme,
       activeNav,
       setActiveNav,
       sensors,
@@ -306,6 +336,8 @@ export const AppProvider = ({ children }) => {
       setDepth,
       safetyEngine,
       commState,
+      batteryState,
+      setBatteryState,
       missionLogs,
       addMissionLog,
       humanDetections,

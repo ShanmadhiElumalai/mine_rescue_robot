@@ -14,27 +14,20 @@ import {
 
 export default function Sidebar({ activeNav, setActiveNav }) {
   const navItems = [
-    { id: 'home', label: 'HOME', icon: Home },
-    { id: 'sensor-simulation', label: 'SENSOR SIMULATION', icon: Sliders },
-    { id: 'safety-risk', label: 'SAFETY & RISK', icon: ShieldAlert },
-    { id: 'robot-health', label: 'ROBOT HEALTH', icon: HeartPulse },
-    { id: 'underground-map', label: 'UNDERGROUND MAP', icon: Map },
-    { id: 'communication', label: 'COMMUNICATION', icon: Wifi },
-    { id: 'mission-logs', label: 'MISSION LOGS', icon: FileText },
-    { id: 'mission-replay', label: 'MISSION REPLAY', icon: RotateCcw },
-    { id: 'reports', label: 'REPORTS', icon: Download },
-    { id: 'camera', label: 'CAMERA', icon: Camera },
+    { id: 'home', label: 'Overview', icon: Home },
+    { id: 'sensor-simulation', label: 'Sensor Simulation', icon: Sliders },
+    { id: 'safety-risk', label: 'Safety & Risk', icon: ShieldAlert },
+    { id: 'robot-health', label: 'Robot Health', icon: HeartPulse },
+    { id: 'underground-map', label: 'Underground Map', icon: Map },
+    { id: 'communication', label: 'Communication', icon: Wifi },
+    { id: 'mission-logs', label: 'Mission Logs', icon: FileText },
+    { id: 'mission-replay', label: 'Mission Replay', icon: RotateCcw },
+    { id: 'reports', label: 'Reports', icon: Download },
+    { id: 'camera', label: 'Camera', icon: Camera },
   ];
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">
-        <div className="sidebar-logo-icon">S</div>
-        <div>
-          <div className="sidebar-title">Mine Rescue</div>
-          <div className="sidebar-subtitle">SLYTHERINE System</div>
-        </div>
-      </div>
       <nav className="sidebar-nav">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -45,7 +38,7 @@ export default function Sidebar({ activeNav, setActiveNav }) {
               className={`nav-item ${isActive ? 'active' : ''}`}
               onClick={() => setActiveNav(item.id)}
             >
-              <Icon size={17} />
+              <Icon size={18} className="nav-icon" />
               <span>{item.label}</span>
             </button>
           );

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import { useApp } from './context/AppContext';
 
 import HomePage from './pages/HomePage';
 import SensorSimulationPage from './pages/SensorSimulationPage';
@@ -16,7 +17,7 @@ import CameraPage from './pages/CameraPage';
 import './styles/main.css';
 
 export default function App() {
-  const [activeNav, setActiveNav] = useState('home');
+  const { activeNav, setActiveNav, theme } = useApp();
 
   const renderActivePage = () => {
     switch (activeNav) {
@@ -46,7 +47,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme={theme}>
       <Sidebar activeNav={activeNav} setActiveNav={setActiveNav} />
       <div className="main-wrapper">
         <Header />

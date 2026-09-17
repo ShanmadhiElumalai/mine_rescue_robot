@@ -1,163 +1,199 @@
 import React from 'react';
-import { ShieldCheck, Compass, Wifi, BatteryCharging, AlertTriangle, Activity } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  ChevronRight, 
+  User, 
+  Wifi, 
+  Battery, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Signal, 
+  Cpu 
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import tunnelRobotImg from '../assets/slytherine_tunnel_robot.jpg';
 
 export default function HomePage() {
-  const { safetyEngine, commState, missionLogs, depth } = useApp();
+  const { safetyEngine, commState, batteryState, setActiveNav } = useApp();
 
-  const getSafetyBadgeStyle = (status) => {
-    switch (status) {
-      case 'SAFE':
-        return { color: '#10b981', label: 'SAFE' };
-      case 'WARNING':
-        return { color: '#f59e0b', label: 'WARNING' };
-      case 'HIGH':
-        return { color: '#f97316', label: 'HIGH RISK' };
-      case 'CRITICAL':
-        return { color: '#ef4444', label: 'CRITICAL' };
-      default:
-        return { color: '#10b981', label: 'SAFE' };
-    }
-  };
+  // Safety card dynamic mapping with reference defaults
+  const safetyStatusLabel = safetyEngine?.overallSafetyStatus || 'SAFE';
+  const isSafetySafe = safetyStatusLabel.toUpperCase() === 'SAFE';
+  const safetyDesc = safetyEngine?.dangerousSensor || 'No critical hazards detected';
 
-  const safetyStyle = getSafetyBadgeStyle(safetyEngine.overallSafetyStatus);
-  const recentEvents = missionLogs.slice(0, 4);
+  // Safety Entry dynamic mapping with reference defaults
+  const entryPercentage = safetyEngine?.safeEntryPercentage ?? 43;
+  const entryDesc = 'Entry restricted';
+
+  // Communication dynamic mapping with reference defaults
+  const commPercentage = commState?.healthPercentage ?? 65;
+  const commSignal = 'Moderate (-68 dBm)';
+
+  // Battery dynamic mapping with reference defaults
+  const batteryPct = batteryState?.percentage ?? 84;
+  const batteryRemaining = batteryState?.timeRemaining ?? '~ 2h 36m remaining';
 
   return (
-    <div className="page-container">
-      {/* Page Header */}
-      <div className="page-header">
-        <div>
-          <h2 className="page-title">Home / Overview Dashboard</h2>
-          <p className="page-subtitle">Central mission landing page and status overview</p>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <div className="home-hero-container">
-        <div className="hero-left-content">
-          <div className="hero-badge">SMART UNDERGROUND RESCUE ROBOT</div>
-          <h1 className="hero-main-title">Welcome to Mine Rescue Robot</h1>
-          <h2 className="hero-robot-name">SLYTHERINE</h2>
+    <div className="overview-page-wrapper">
+      {/* 1. Hero Section */}
+      <section className="overview-hero-card">
+        <div className="hero-content-column">
+          <span className="hero-brand-eyebrow">SLYTHERINE</span>
+          <h1 className="hero-heading">
+            <span className="hero-heading-line">Welcome to</span>
+            <span className="hero-heading-line">Mine Rescue Robot</span>
+            <span className="hero-heading-brand">SLYTHERINE</span>
+          </h1>
           <p className="hero-subtext">Monitoring. Detecting. Saving Lives.</p>
-          <p className="hero-description">
-            Autonomous multi-segmented snake rescue robot deployed for underground disaster response, environmental monitoring, gas hazard detection, and survivor search & rescue operations.
-          </p>
+          <div className="hero-accent-divider"></div>
         </div>
 
-        <div className="hero-right-image">
-          <img 
-            src="/slytherine_robot.jpg" 
-            alt="SLYTHERINE Snake Rescue Robot" 
-            className="slytherine-large-img"
-            onError={(e) => {
-              e.target.src = "/slytherine_robot_gen.png";
-            }}
+        <div className="hero-tunnel-scene">
+          <img
+            src={tunnelRobotImg}
+            alt="SLYTHERINE Rescue Robot in Mine Tunnel"
+            className="hero-tunnel-image"
           />
+          <div className="hero-tunnel-vignette"></div>
         </div>
-      </div>
+      </section>
 
-      {/* 4 Compact Overview Stats */}
-      <div className="hero-stats-row">
-        <div className="hero-stat-box">
-          <div className={`stat-icon-wrapper ${safetyEngine.overallSafetyStatus.toLowerCase() === 'safe' ? 'green' : safetyEngine.overallSafetyStatus.toLowerCase() === 'warning' ? 'yellow' : 'red'}`}>
-            <ShieldCheck size={22} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Safety Status</span>
-            <span className="stat-value" style={{ color: safetyStyle.color }}>{safetyStyle.label}</span>
-            <span className="stat-desc">{safetyEngine.dangerousSensor || 'No critical hazards'}</span>
-          </div>
-        </div>
-
-        <div className="hero-stat-box">
-          <div className="stat-icon-wrapper blue">
-            <Compass size={22} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Safe Entry</span>
-            <span className="stat-value">{safetyEngine.safeEntryPercentage}%</span>
-            <span className="stat-desc">{safetyEngine.statusText}</span>
-          </div>
-        </div>
-
-        <div className="hero-stat-box">
-          <div className="stat-icon-wrapper purple">
-            <Wifi size={22} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Communication</span>
-            <span className="stat-value">{commState.healthPercentage}%</span>
-            <span className="stat-desc">{commState.connectionStatus} ({commState.signalStrength})</span>
-          </div>
-        </div>
-
-        <div className="hero-stat-box">
-          <div className="stat-icon-wrapper dark">
-            <BatteryCharging size={22} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Battery</span>
-            <span className="stat-value">84%</span>
-            <span className="stat-desc">4h 20m remaining</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Overview Cards Row */}
-      <div className="home-overview-grid">
-        {/* Current Mission Overview */}
-        <div className="dash-card">
-          <div className="card-header">
-            <div className="card-title-group">
-              <Activity size={16} color="#2563eb" />
-              <span className="card-title">Current Mission Overview</span>
+      {/* 2. Four Status / Metric Cards */}
+      <section className="overview-metrics-grid">
+        {/* Card 1: Safety Status */}
+        <div 
+          className="metric-card metric-card-safety"
+          onClick={() => setActiveNav && setActiveNav('safety-risk')}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="metric-card-header">
+            <div className="metric-icon-box green">
+              <ShieldCheck size={18} />
             </div>
+            <span className="metric-arrow-btn">
+              <ChevronRight size={16} />
+            </span>
           </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div className="overview-row">
-              <span className="overview-lbl">Active Mission:</span>
-              <span className="overview-val">MISSION-001</span>
-            </div>
-            <div className="overview-row">
-              <span className="overview-lbl">Deployment Robot:</span>
-              <span className="overview-val" style={{ color: '#2563eb' }}>SLYTHERINE</span>
-            </div>
-            <div className="overview-row">
-              <span className="overview-lbl">Current Depth:</span>
-              <span className="overview-val">{depth} m</span>
-            </div>
-            <div className="overview-row">
-              <span className="overview-lbl">System Status:</span>
-              <span className={`status-badge ${safetyEngine.overallSafetyStatus.toLowerCase()}`} style={{ fontSize: '11px' }}>
-                {safetyEngine.statusText}
-              </span>
+
+          <div className="metric-card-content">
+            <span className="metric-title">Safety Status</span>
+            <div className="metric-primary-value green">{safetyStatusLabel}</div>
+            <span className="metric-subtitle">{safetyDesc}</span>
+          </div>
+
+          <div className="metric-card-footer">
+            <div className="metric-status-badge green">
+              <CheckCircle2 size={13} />
+              <span>{isSafetySafe ? 'System normal' : 'Hazard active'}</span>
             </div>
           </div>
         </div>
 
-        {/* Recent Critical Events Summary */}
-        <div className="dash-card">
-          <div className="card-header">
-            <div className="card-title-group">
-              <AlertTriangle size={16} color="#f59e0b" />
-              <span className="card-title">Recent Critical Events Summary</span>
+        {/* Card 2: Safety Entry */}
+        <div 
+          className="metric-card metric-card-entry"
+          onClick={() => setActiveNav && setActiveNav('safety-risk')}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="metric-card-header">
+            <div className="metric-icon-box amber">
+              <User size={18} />
             </div>
+            <span className="metric-arrow-btn">
+              <ChevronRight size={16} />
+            </span>
           </div>
-          <div className="card-body">
-            <div className="events-summary-list">
-              {recentEvents.map(evt => (
-                <div key={evt.id} className="event-summary-item">
-                  <span className="event-time">{evt.time}</span>
-                  <span className={`event-badge ${evt.category?.toLowerCase() || 'info'}`}>{evt.event}</span>
-                  <span className="event-details">{evt.details}</span>
-                </div>
-              ))}
+
+          <div className="metric-card-content">
+            <span className="metric-title">Safety Entry</span>
+            <div className="metric-primary-value amber">{entryPercentage}%</div>
+            <span className="metric-subtitle">{entryDesc}</span>
+          </div>
+
+          <div className="metric-card-footer">
+            <div className="metric-status-badge amber">
+              <AlertTriangle size={13} />
+              <span>Keep monitoring</span>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Card 3: Communication */}
+        <div 
+          className="metric-card metric-card-comm"
+          onClick={() => setActiveNav && setActiveNav('communication')}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="metric-card-header">
+            <div className="metric-icon-box cyan">
+              <Wifi size={18} />
+            </div>
+            <span className="metric-arrow-btn">
+              <ChevronRight size={16} />
+            </span>
+          </div>
+
+          <div className="metric-card-content">
+            <span className="metric-title">Communication</span>
+            <div className="metric-primary-value cyan">{commPercentage}%</div>
+            <span className="metric-subtitle">{commSignal}</span>
+
+            <div className="metric-progress-track">
+              <div 
+                className="metric-progress-fill cyan" 
+                style={{ width: `${Math.min(100, Math.max(0, commPercentage))}%` }}
+              ></div>
+            </div>
+          </div>
+
+          <div className="metric-card-footer">
+            <div className="metric-status-badge cyan">
+              <Signal size={13} />
+              <span>Stable</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Battery */}
+        <div 
+          className="metric-card metric-card-battery"
+          onClick={() => setActiveNav && setActiveNav('robot-health')}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="metric-card-header">
+            <div className="metric-icon-box purple">
+              <Battery size={18} />
+            </div>
+            <span className="metric-arrow-btn">
+              <ChevronRight size={16} />
+            </span>
+          </div>
+
+          <div className="metric-card-content">
+            <span className="metric-title">Battery</span>
+            <div className="metric-primary-value purple">{batteryPct}%</div>
+            <span className="metric-subtitle">{batteryRemaining}</span>
+
+            <div className="metric-progress-track">
+              <div 
+                className="metric-progress-fill purple" 
+                style={{ width: `${Math.min(100, Math.max(0, batteryPct))}%` }}
+              ></div>
+            </div>
+          </div>
+
+          <div className="metric-card-footer">
+            <div className="metric-status-badge purple">
+              <Cpu size={13} />
+              <span>Normal</span>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
-
